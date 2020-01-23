@@ -1,10 +1,9 @@
 version: '3'
-#
+
 networks:
   my-network:
     driver: bridge
-#172.28.0.1
-#172.30.0.1
+
 
 services:
 
@@ -17,10 +16,6 @@ services:
         - 8761
       networks:
         - my-network
-      #environment:
-      #  MONGO_INITDB_ROOT_USERNAME: maks
-      #  MONGO_INITDB_ROOT_PASSWORD: 777
-
 
     mongorepository:
       container_name: mongorepository
@@ -34,7 +29,6 @@ services:
         MONGO_INITDB_DATABASE: complexjava
       networks:
         - my-network
-        #MYSQL_PORT: ${database_port}
 
 
     repository:
