@@ -1,0 +1,50 @@
+version: '3'
+#
+networks:
+  my-network:
+    driver: bridge
+#172.28.0.1
+#172.30.0.1
+
+services:
+
+    discovery:
+      container_name: discovery
+      image: complexjava/register-service
+      ports:
+        - 8761:8761
+      expose:
+        - 8761
+      networks:
+        - my-network
+      #environment:
+      #  MONGO_INITDB_ROOT_USERNAME: maks
+      #  MONGO_INITDB_ROOT_PASSWORD: 777
+
+
+    mongorepository:
+      container_name: mongorepository
+      restart: always
+      image: mongo
+      expose:
+        - 27017
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: maks
+        MONGO_INITDB_ROOT_PASSWORD: 777
+        MONGO_INITDB_DATABASE: complexjava
+      networks:
+        - my-network
+        #MYSQL_PORT: ${database_port}
+
+
+    repository:
+      image: mysql
+      container_name: repository
+      expose:
+        - ${database_port}
+      environment:
+        MYSQL_ROOT_PASSWORD: ${database_password}
+        MYSQL_DATABASE: ${database_name}
+        MYSQL_PORT: ${database_port}
+      networks:
+        - my-network

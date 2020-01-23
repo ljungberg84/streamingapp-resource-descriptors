@@ -1,0 +1,50 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamer
+  labels:
+    app: streamer
+spec:
+  selector:
+    matchLabels:
+      app: streamer
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: streamer
+        #tier: backend
+    spec:
+      containers:
+      - name: streamer
+        image: streamer-image
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 8081
+        env:
+        - name: FILE_LOCATION
+          value: /videos
+        volumeMounts:
+        - mountPath: /videos
+          name: myvideos
+      volumes:
+      - name: myvideos
+        hostPath:
+          path: /my-videos
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamer
+spec:
+  selector:
+    app: streamer
+    #app: service1-deploy
+    #tier: backend
+  ports:
+    - protocol: TCP
+      port: 8081
+      nodePort: 30004
+  type: NodePort

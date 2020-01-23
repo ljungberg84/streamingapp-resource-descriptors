@@ -1,0 +1,115 @@
+#before running create network: 'streamer-service-deploy2_default' and run discovery: 'docker run --name discovery --expose 8761 --network streamer-service-deploy2_default complexjava/register-service'
+#discovery works on uploader and encoder
+#docker run --name repository --network streamer-service-deploy2_default --expose 3306 --env MYSQL_ROOT_PASSWORD=root --env MYSQL_DATABASE=streamingApp --env MYSQL_PORT=3306 mysql
+#run eureka in host network: docker run --name discovery-host -p 8761:8761 --network host complexjava/register-service
+
+version: '3'
+
+networks:
+  my-network:
+    driver: bridge
+
+services:
+
+  gateway:
+    container_name: gateway
+    #network_mode: host
+    image: complexjava/api-gateway
+
+    ports:
+      - 7000:7000
+    #expose: 7000
+    environment:
+      EUREKA_URL: //discovery:8761
+    networks:
+      - my-network
+
+
+  data:
+    image: complex-java/video-data
+    container_name: data
+    #depends_on:
+    #  - repository
+    ports:
+      - 8000:8000
+    expose:
+      - 8000
+    environment:
+      #url=jdbc:mysql://${MYSQL_HOST:localhost:3306/streamingApp}
+      MYSQL_HOST: repository:${database_port}/${database_name}
+      BROKER_URL: activemq:${broker_port}
+      EUREKA_URL: //discovery:8761
+    networks:
+      - my-network
+      #done
+
+
+
+  # streamer:
+  #   image: complex-java/video-streamer
+  #   container_name: video-streamer-container
+  #   ports:
+  #     - 8081:8081
+  #   volumes:
+  #     - .${file_location}:/videos
+  #   environment:
+  #     FILE_LOCATION: ${file_location}
+
+  # docker run --uploader-host --env EUREKA_URL=//localhost:8761 -p 8082:8082 --env BROKER_URL=localhost:61616 complexjava/video-uploader --network host
+  uploader:
+    image: complexjava/video-uploader
+    container_name: uploader
+    ports:
+      - 8082:8082
+    volumes:
+      - .${file_location}:/videos
+    environment:
+      FILE_LOCATION: ${file_location}
+      BROKER_URL: activemq:${broker_port}
+      #EUREKA_URL=//<container-name>:<port>
+      EUREKA_URL: //discovery:8761
+    networks:
+      - my-network
+      #done
+
+
+  encoder:
+    #image: encoder
+    image: complex-java/encoder-image2201
+    container_name: encoder
+    user: root
+    volumes:
+      - .${file_location}:/videos
+    ports:
+      - 8083:8083
+    environment:
+       BROKER_URL: activemq:${broker_port}
+       FILE_LOCATION: ${file_location}
+       EUREKA_URL: //discovery:8761
+    networks:
+      - my-network
+       #done
+
+
+  # repository:
+  #   image: mysql
+  #   container_name: repository
+  #   expose:
+  #     - ${database_port}
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${database_password}
+  #     MYSQL_DATABASE: ${database_name}
+  #     MYSQL_PORT: ${database_port}
+
+  #docker run --name activemq-host -p 61616:61616 --network rmohr/activemq
+  activemq:
+    image: rmohr/activemq
+    container_name: activemq
+    restart: always
+    ports:
+    #  - 61616:61616
+      - 8161:8161
+    expose:
+      - ${broker_port}
+    networks:
+      - my-network

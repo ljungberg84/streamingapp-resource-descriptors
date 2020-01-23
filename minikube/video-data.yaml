@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-data
+  labels:
+    app: video-data
+spec:
+  selector:
+    matchLabels:
+      app: video-data
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: video-data
+    spec:
+      containers:
+      - name: video-data
+        image: video-data-image
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 8000
+        env:
+        - name: DATASOURCE_URL
+          value: mysql://${MYSQL_REPOSITORY_SERVICE_HOST}:${MYSQL_REPOSITORY_SERVICE_PORT}/${DB_NAME}
+        - name: DB_TYPE
+          value: mysql
+        - name: DB_NAME
+          value: streamingApp
+        - name: BROKER_URL
+          value: ${ACTIVEMQ_SERVICE_HOST}:${ACTIVEMQ_SERVICE_PORT}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: video-data
+spec:
+  selector:
+    app: video-data
+    #app: service1-deploy
+    #tier: backend
+  ports:
+    - protocol: TCP
+      port: 8000
+      nodePort: 30001
+  type: NodePort

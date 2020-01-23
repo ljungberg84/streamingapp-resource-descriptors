@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uploader
+  labels:
+    app: uploader
+spec:
+  selector:
+    matchLabels:
+      app: uploader
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: uploader
+        #tier: backend
+    spec:
+      containers:
+      - name: uploader
+        image: uploader-image
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 8082
+        env:
+        - name: BROKER_URL
+          value: ${ACTIVEMQ_SERVICE_HOST}:${ACTIVEMQ_SERVICE_PORT}
+        - name: FILE_LOCATION
+          value: /videos
+        volumeMounts:
+        - mountPath: /videos
+          name: myvideos
+      volumes:
+      - name: myvideos
+        hostPath:
+          path: /my-videos
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uploader
+spec:
+  selector:
+    app: uploader
+    #app: service1-deploy
+    #tier: backend
+  ports:
+    - protocol: TCP
+      port: 8082
+      nodePort: 30003
+  type: NodePort

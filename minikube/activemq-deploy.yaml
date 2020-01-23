@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: activemq
+  labels:
+    app: activemq
+spec:
+  selector:
+    matchLabels:
+      app: activemq
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: activemq
+        #tier: backend
+    spec:
+      containers:
+        - name: activemq
+          image: rmohr/activemq
+          imagePullPolicy: IfNotPresent
+          #Never
+          ports:
+            - containerPort: 61616
+            - containerPort: 8161
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: activemq
+spec:
+  selector:
+    app: activemq
+    #tier: backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 61616
+
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: activemq-port
+spec:
+  selector:
+    app: activemq
+  ports:
+    - protocol: TCP
+      port: 8161
+      nodePort: 30002
+  type: NodePort
